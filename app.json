@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Memora",
+    "slug": "memora-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F4F1E8"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": { "infoPlist": { "NSLocationWhenInUseUsageDescription": "Memora uses your location to help caregivers find you during an SOS alert." } },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F4F1E8"
+      }
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
+  }
+}
