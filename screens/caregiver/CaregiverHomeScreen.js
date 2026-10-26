@@ -1,24 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme, VictoryScatter } from "victory-native";
 import { useApp } from "../../context/AppContext";
 import { subscribeToResults } from "../../utils/firestoreResults";
-
 import { subscribeToActiveSOS, resolveSOS } from "../../utils/sosAlerts";
-// add state: const [sosAlerts, setSosAlerts] = useState([]);
-// add useEffect: useEffect(() => subscribeToActiveSOS(linkCode, setSosAlerts), [linkCode]);
-// render above everything else, when sosAlerts.length > 0:
-{sosAlerts.map((a) => (
-  <View key={a.id} style={{ backgroundColor: "#C0392B", padding: 16, borderRadius: 12, marginBottom: 16 }}>
-    <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>SOS Alert</Text>
-    {a.location && (
-      <Text style={{ color: "#FFF" }}>Location: {a.location.lat.toFixed(4)}, {a.location.lng.toFixed(4)}</Text>
-    )}
-    <TouchableOpacity onPress={() => resolveSOS(a.id)} style={{ marginTop: 8 }}>
-      <Text style={{ color: "#FFF", textDecorationLine: "underline" }}>Mark as resolved</Text>
-    </TouchableOpacity>
-  </View>
-))}
+
 const GAME_LABELS = {
   pattern_recall: "Pattern recall",
   face_name: "Face and name",
@@ -28,12 +15,18 @@ export default function CaregiverHomeScreen() {
   const { linkCode, resetRole } = useApp();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sosAlerts, setSosAlerts] = useState([]);
 
   useEffect(() => {
     const unsubscribe = subscribeToResults(linkCode, (data) => {
       setResults(data);
       setLoading(false);
     });
+    return unsubscribe;
+  }, [linkCode]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToActiveSOS(linkCode, setSosAlerts);
     return unsubscribe;
   }, [linkCode]);
 
@@ -54,6 +47,20 @@ export default function CaregiverHomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {sosAlerts.map((a) => (
+          <View key={a.id} style={styles.sosBanner}>
+            <Text style={styles.sosTitle}>SOS Alert</Text>
+            {a.location && (
+              <Text style={styles.sosText}>
+                Location: {a.location.lat.toFixed(4)}, {a.location.lng.toFixed(4)}
+              </Text>
+            )}
+            <TouchableOpacity onPress={() => resolveSOS(a.id)} style={styles.resolveButton}>
+              <Text style={styles.resolveText}>Mark as resolved</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+
         <Text style={styles.title}>Progress</Text>
         <Text style={styles.subtitle}>Watching: {linkCode}</Text>
 
@@ -62,8 +69,7 @@ export default function CaregiverHomeScreen() {
         ) : totalSessions === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyText}>
-              No game sessions yet. Once the patient plays a round, it will
-              show up here automatically.
+              No game sessions yet. Once the patient plays a round, it will show up here automatically.
             </Text>
           </View>
         ) : (
@@ -85,40 +91,35 @@ export default function CaregiverHomeScreen() {
 
             <View style={styles.chartCard}>
               <Text style={styles.chartTitle}>Accuracy over time</Text>
-              <VictoryChart theme={VictoryTheme.material} height={220} padding={{ top: 10, bottom: 40, left: 45, right: 20 }}>
-                <VictoryAxis
-                  tickFormat={(t) => `#${t}`}
-                  style={{ tickLabels: { fontSize: 11 } }}
-                />
+              <VictoryChart
+                theme={VictoryTheme.material}
+                height={220}
+                padding={{ top: 10, bottom: 40, left: 45, right: 20 }}
+              >
+                <VictoryAxis tickFormat={(t) => `#${t}`} style={{ tickLabels: { fontSize: 11 } }} />
                 <VictoryAxis
                   dependentAxis
                   domain={[0, 100]}
                   tickFormat={(t) => `${t}%`}
                   style={{ tickLabels: { fontSize: 11 } }}
                 />
-                <VictoryLine
-                  data={chartData}
-                  style={{ data: { stroke: "#0F6E56", strokeWidth: 2 } }}
-                />
-                <VictoryScatter
-                  data={chartData}
-                  size={4}
-                  style={{ data: { fill: "#0F6E56" } }}
-                />
+                <VictoryLine data={chartData} style={{ data: { stroke: "#0F6E56", strokeWidth: 2 } }} />
+                <VictoryScatter data={chartData} size={4} style={{ data: { fill: "#0F6E56" } }} />
               </VictoryChart>
             </View>
 
             <Text style={styles.historyHeading}>Recent sessions</Text>
-            {[...results].reverse().slice(0, 8).map((r) => (
-              <View key={r.id} style={styles.historyRow}>
-                <Text style={styles.historyGame}>
-                  {GAME_LABELS[r.gameType] || r.gameType}
-                </Text>
-                <Text style={styles.historyDetail}>
-                  {Math.round(r.accuracy * 100)}% · Level {r.difficultyLevel} · {r.avgResponseTimeMs}ms
-                </Text>
-              </View>
-            ))}
+            {[...results]
+              .reverse()
+              .slice(0, 8)
+              .map((r) => (
+                <View key={r.id} style={styles.historyRow}>
+                  <Text style={styles.historyGame}>{GAME_LABELS[r.gameType] || r.gameType}</Text>
+                  <Text style={styles.historyDetail}>
+                    {Math.round(r.accuracy * 100)}% · Level {r.difficultyLevel} · {r.avgResponseTimeMs}ms
+                  </Text>
+                </View>
+              ))}
           </>
         )}
 
@@ -180,4 +181,9 @@ const styles = StyleSheet.create({
   historyDetail: { fontSize: 13, color: "#5F5E5A" },
   switchButton: { marginTop: 20, alignItems: "center" },
   switchText: { color: "#993C1D", fontSize: 15 },
+  sosBanner: { backgroundColor: "#C0392B", padding: 16, borderRadius: 12, marginBottom: 16 },
+  sosTitle: { color: "#FFF", fontWeight: "700", fontSize: 16 },
+  sosText: { color: "#FFF" },
+  resolveButton: { marginTop: 8 },
+  resolveText: { color: "#FFF", textDecorationLine: "underline" },
 });

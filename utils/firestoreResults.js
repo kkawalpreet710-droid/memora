@@ -10,7 +10,7 @@ export async function saveGameResult({
   gameType,
   difficultyLevel,
   accuracy,
-  avgResponseTimeMs,
+  avgResponseTimeMs,a
 }) {
   const payload = { linkCode, gameType, difficultyLevel, accuracy, avgResponseTimeMs };
   try {

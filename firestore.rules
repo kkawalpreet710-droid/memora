@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /gameResults/{resultId} {
+      allow read, write: if true;
+    }
+    
+    match /sosAlerts/{alertId} {
+      allow read, write: if true;
+    }
+  }
+}

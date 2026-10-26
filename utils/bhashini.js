@@ -3,9 +3,12 @@
 // Fill in your real credentials from bhashini.gov.in after registration.
 // These are placeholders - the module won't work until replaced.
 
-const USER_ID = "YOUR_BHASHINI_USER_ID";
-const ULCA_API_KEY = "YOUR_BHASHINI_ULCA_API_KEY";
+const USER_ID = process.env.EXPO_PUBLIC_BHASHINI_USER_ID;
+const ULCA_API_KEY = process.env.EXPO_PUBLIC_BHASHINI_ULCA_API_KEY;
 
+if (!USER_ID || !ULCA_API_KEY) {
+  throw new Error("Missing Bhashini keys: check .env and restart Expo with -c");
+}
 const PIPELINE_CONFIG_ENDPOINT = "https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline";
 const DEFAULT_PIPELINE_ID = "64392f96daac500b55c543cd";
 
